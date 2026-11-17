@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Atmos — Weather Forecast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Atmos home"><span class="brand-mark">✳</span> atmos</a>
+      <div class="top-note"><span class="live-dot"></span> LIVE WEATHER</div>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">YOUR WEATHER, AT A GLANCE</p>
+      <h1>Find your <span>forecast.</span></h1>
+      <p class="intro-copy">A little clarity for whatever the day brings.</p>
+    </section>
+
+    <form class="search-form" id="searchForm">
+      <label class="sr-only" for="cityInput">Search for a city</label>
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input id="cityInput" type="search" placeholder="Search any city around the world..." autocomplete="off" required>
+      <button type="submit" id="searchButton">Search <span aria-hidden="true">→</span></button>
+    </form>
+
+    <p class="status-message" id="statusMessage" role="status" aria-live="polite">Try a city like Abuja, London, Tokyo or New York.</p>
+
+    <section class="weather-content" id="weatherContent" hidden>
+      <div class="current-card" id="currentCard">
+        <div class="current-top">
+          <div>
+            <p class="card-kicker">CURRENT WEATHER</p>
+            <h2 id="cityName">Abuja</h2>
+            <p class="date-line" id="currentDate">Today</p>
+          </div>
+          <div class="weather-symbol" id="weatherSymbol" aria-hidden="true">☀</div>
+        </div>
+        <div class="temperature-row">
+          <div class="temperature"><span id="temperature">--</span><sup>°C</sup></div>
+          <div class="condition-block">
+            <p id="condition">Clear sky</p>
+            <span id="feelsLike">Feels like --°</span>
+          </div>
+        </div>
+        <div class="current-bottom">
+          <span id="highLow">H: --° &nbsp; L: --°</span>
+          <span id="sunInfo">☀ Sunrise -- &nbsp; ◐ Sunset --</span>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <div><p class="card-kicker">THE DETAILS</p><h3>Weather at a glance</h3></div>
+      </div>
+      <div class="metrics-grid">
+        <article class="metric-card"><span class="metric-icon">💧</span><p>Humidity</p><strong id="humidity">--%</strong><small>Air moisture</small></article>
+        <article class="metric-card"><span class="metric-icon">〰</span><p>Wind speed</p><strong id="wind">-- m/s</strong><small id="windDirection">Current wind</small></article>
+        <article class="metric-card"><span class="metric-icon">◉</span><p>Pressure</p><strong id="pressure">-- hPa</strong><small>Atmospheric pressure</small></article>
+        <article class="metric-card"><span class="metric-icon">☁</span><p>Visibility</p><strong id="visibility">-- km</strong><small>Viewing distance</small></article>
+      </div>
+
+      <section class="forecast-section">
+        <div class="section-heading">
+          <div><p class="card-kicker">PLAN AHEAD</p><h3>5-day forecast</h3></div>
+          <span class="forecast-note">Daily outlook</span>
+        </div>
+        <div class="forecast-grid" id="forecastGrid"></div>
+      </section>
+      <p class="data-credit">Weather data provided by OpenWeather.</p>
+    </section>
+
+    <footer><span>ATMOS / WEATHER DASHBOARD</span><span>Made for curious minds <b>✳</b></span></footer>
+  </main>
+</body>
+</html>
