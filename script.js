@@ -1,3 +1,6 @@
+
+const API_BASE_URL = "https://atmos-weather-api-xcvr.onrender.com";
+
 const searchForm = document.querySelector("#searchForm");
 const cityInput = document.querySelector("#cityInput");
 const searchButton = document.querySelector("#searchButton");
@@ -43,22 +46,20 @@ function titleCase(value) {
 
 async function fetchJson(url) {
   const response = await fetch(url);
+
   if (!response.ok) {
     let message = `Request failed (${response.status}).`;
+
     try {
       const errorData = await response.json();
-      if (errorData.message) message = errorData.message;
+      if (errorData.detail) message = errorData.detail;
+      else if (errorData.message) message = errorData.message;
     } catch (_) {}
+
     throw new Error(message);
   }
-  return response.json();
-}
 
-async function getCoordinates(city) {
-  const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`;
-  const locations = await fetchJson(url);
-  if (!locations.length) throw new Error(`We couldn't find "${city}". Check the spelling and try again.`);
-  return locations[0];
+  return response.json();
 }
 
 function renderCurrentWeather(data) {
@@ -70,35 +71,52 @@ function renderCurrentWeather(data) {
 
   document.querySelector("#cityName").textContent =
     `${data.name}, ${data.sys.country || ""}`.replace(/,\s*$/, "");
+
   document.querySelector("#currentDate").textContent =
-    new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+    new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric"
+    });
+
   document.querySelector("#weatherSymbol").textContent = icon;
   document.querySelector("#temperature").textContent = temp;
   document.querySelector("#condition").textContent = titleCase(weather.description);
   document.querySelector("#feelsLike").textContent = `Feels like ${feels}°`;
+
   document.querySelector("#highLow").textContent =
     `H: ${Math.round(data.main.temp_max)}°   L: ${Math.round(data.main.temp_min)}°`;
+
   document.querySelector("#sunInfo").textContent =
     `☀ Sunrise ${formatTime(data.sys.sunrise, data.timezone)}   ◐ Sunset ${formatTime(data.sys.sunset, data.timezone)}`;
 
   document.querySelector("#humidity").textContent = `${data.main.humidity}%`;
   document.querySelector("#wind").textContent = `${data.wind.speed} m/s`;
+
   document.querySelector("#windDirection").textContent =
     Number.isFinite(data.wind.deg) ? `${data.wind.deg}° direction` : "Current wind";
+
   document.querySelector("#pressure").textContent = `${data.main.pressure} hPa`;
+
   document.querySelector("#visibility").textContent =
-    Number.isFinite(data.visibility) ? `${(data.visibility / 1000).toFixed(1)} km` : "N/A";
+    Number.isFinite(data.visibility)
+      ? `${(data.visibility / 1000).toFixed(1)} km`
+      : "N/A";
 
   const isNight = data.dt < data.sys.sunrise || data.dt > data.sys.sunset;
+
   document.body.dataset.weather = mainCondition.toLowerCase();
   document.body.dataset.time = isNight ? "night" : "day";
 }
 
 function buildDailyForecast(forecastList) {
   const days = new Map();
+
   forecastList.forEach(item => {
     const day = item.dt_txt.split(" ")[0];
+
     if (!days.has(day)) days.set(day, []);
+
     days.get(day).push(item);
   });
 
@@ -106,10 +124,15 @@ function buildDailyForecast(forecastList) {
     const representative = entries.reduce((best, item) => {
       const bestHour = Number(best.dt_txt.slice(11, 13));
       const itemHour = Number(item.dt_txt.slice(11, 13));
-      return Math.abs(itemHour - 12) < Math.abs(bestHour - 12) ? item : best;
+
+      return Math.abs(itemHour - 12) < Math.abs(bestHour - 12)
+        ? item
+        : best;
     }, entries[0]);
+
     const min = Math.min(...entries.map(item => item.main.temp_min));
     const max = Math.max(...entries.map(item => item.main.temp_max));
+
     return { date, item: representative, min, max };
   });
 }
@@ -117,54 +140,53 @@ function buildDailyForecast(forecastList) {
 function renderForecast(forecastData) {
   const forecastGrid = document.querySelector("#forecastGrid");
   const dailyForecast = buildDailyForecast(forecastData.list);
+
   forecastGrid.innerHTML = dailyForecast.map((day, index) => {
     const condition = day.item.weather[0].main;
     const symbol = weatherSymbols[condition] || "☁";
+
     return `
       <article class="forecast-card">
         <p class="forecast-day">${index === 0 ? "Today" : formatDay(day.date)}</p>
         <span class="forecast-symbol" aria-hidden="true">${symbol}</span>
         <p class="forecast-condition">${titleCase(day.item.weather[0].description)}</p>
-        <div class="forecast-temperatures"><strong>${Math.round(day.max)}°</strong><span>${Math.round(day.min)}°</span></div>
+        <div class="forecast-temperatures">
+          <strong>${Math.round(day.max)}°</strong>
+          <span>${Math.round(day.min)}°</span>
+        </div>
       </article>`;
   }).join("");
 }
 
 async function searchWeather(city) {
-  if (!API_KEY || API_KEY === "YOUR_OPENWEATHERMAP_API_KEY") {
-    showStatus("Add your OpenWeatherMap API key in config.js first.", "error");
-    return;
-  }
-
   setLoading(true);
   weatherContent.hidden = true;
   showStatus(`Finding the latest weather for ${city}...`);
 
   try {
-    const location = await getCoordinates(city);
-    const coordinates = `lat=${location.lat}&lon=${location.lon}`;
-    const currentUrl = `https://api.openweathermap.org/data/2.5/weather?${coordinates}&units=metric&appid=${API_KEY}`;
-    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?${coordinates}&units=metric&appid=${API_KEY}`;
+    const url = `${API_BASE_URL}/api/weather?city=${encodeURIComponent(city)}`;
 
-    const [currentData, forecastData] = await Promise.all([
-      fetchJson(currentUrl),
-      fetchJson(forecastUrl)
-    ]);
+    const result = await fetchJson(url);
 
-    renderCurrentWeather(currentData);
-    renderForecast(forecastData);
+    renderCurrentWeather(result.current);
+    renderForecast(result.forecast);
+
     weatherContent.hidden = false;
-    showStatus(`Showing current conditions for ${currentData.name}.`, "success");
+
+    showStatus(
+      `Showing current conditions for ${result.current.name}.`,
+      "success"
+    );
+
   } catch (error) {
     console.error("Weather lookup error:", error);
-    const message = error.message.includes("401")
-      ? "Your API key may still be activating, or it may be incorrect. Check config.js and try again later."
-      : error.message.includes("429")
-        ? "The API request limit has been reached. Please wait a little and try again."
-        : error.message.toLowerCase().includes("failed to fetch")
-          ? "Network error. Check your internet connection and try again."
-          : error.message;
+
+    const message = error.message.toLowerCase().includes("failed to fetch")
+      ? "Network error. Check your internet connection and try again."
+      : error.message;
+
     showStatus(message, "error");
+
   } finally {
     setLoading(false);
   }
@@ -172,12 +194,15 @@ async function searchWeather(city) {
 
 searchForm.addEventListener("submit", event => {
   event.preventDefault();
+
   const city = cityInput.value.trim();
+
   if (!city) {
     showStatus("Please enter a city name.", "error");
     cityInput.focus();
     return;
   }
+
   searchWeather(city);
 });
 
